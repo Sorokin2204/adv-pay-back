@@ -4,10 +4,10 @@ const setupRelationship = require('../setupRelationship');
 require('dotenv').config();
 
 const config = {
-  host: 'localhost',
-  user: 'root',
-  pass: 'pass',
-  dbName: 'idv_pay',
+  host: 'us-cdbr-east-06.cleardb.net',
+  user: 'bff23bd1bd5841',
+  pass: 'c094e2ab',
+  dbName: 'heroku_ab36879f58c5bab',
 };
 
 const sequelize = new Sequelize(config.dbName, config.user, config.pass, {
