@@ -47,10 +47,11 @@ class PackageController {
           },
         });
         if (findUser) {
-            console.log(findUser);
-        res.json('YES');
-      } else {
-        res.json('NO');
+          console.log(findUser);
+          res.json('YES');
+        } else {
+          res.json('NO');
+        }
       }
     }
     res.json('NO');
