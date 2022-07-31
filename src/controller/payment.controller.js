@@ -23,7 +23,7 @@ class PackageController {
   }
 
   async getPayments(req, res) {
-    const tokenData = jwt.verify(req.headers['request_token'], process.env.ADD_CARD_SECRET, (err, tokenData) => {
+    const tokenData = jwt.verify(req.headers['request_token'], process.env.SECRET_TOKEN, (err, tokenData) => {
       if (err) {
         throw new CustomError(403, TypeError.PROBLEM_WITH_TOKEN);
       }

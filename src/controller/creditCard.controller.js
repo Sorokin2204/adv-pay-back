@@ -8,8 +8,6 @@ const Package = db.packages;
 class CreditCardController {
   async getCreditCards(req, res) {
     const secret = req.headers['request_secret'];
-    console.log(process.env.ADD_CARD_SECRET);
-    console.log(secret == process.env.ADD_CARD_SECRET);
     if (secret === process.env.ADD_CARD_SECRET) {
       const text = Object.keys(req.body)[0];
       let arr = text.split('\r\n');
