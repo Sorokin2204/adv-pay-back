@@ -52,7 +52,11 @@ class PackageController {
         } else {
           res.send('NO');
         }
+      } else {
+        res.send('NO');
       }
+    } else {
+      res.send('NO');
     }
   }
 }
