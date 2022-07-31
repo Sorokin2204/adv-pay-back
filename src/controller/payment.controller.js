@@ -40,7 +40,7 @@ class PackageController {
     const { LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, LMI_PAYER_PURSE, LMI_PAYER_WM, LMI_HASH, token, LMI_PREREQUEST } = req.body;
     console.log(req.body);
     if (LMI_PREREQUEST === '1') {
-      if (LMI_PAYEE_PURSE === 'Z157035074475') {
+      if (LMI_PAYEE_PURSE === 'Z250362075889') {
         res.send('YES');
       }
     } else {
