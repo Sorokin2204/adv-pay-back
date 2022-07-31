@@ -37,7 +37,7 @@ class PackageController {
         console.log('HASK OK');
         const tokenData = jwt.verify(token, 'secret-jwt-pass', (err, tokenData) => {
           if (err) {
-            res.send('NO');
+            throw new CustomError(400);
           }
           return tokenData;
         });
@@ -69,13 +69,13 @@ class PackageController {
           res.send('YES');
         } else {
           console.log('FIND - ERROR');
-          res.send('NO');
+          throw new CustomError(400);
         }
       } else {
-        res.send('NO');
+        throw new CustomError(400);
       }
     } else {
-      res.send('NO');
+      throw new CustomError(400);
     }
   }
 }
