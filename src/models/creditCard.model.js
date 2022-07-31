@@ -7,9 +7,9 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
-    active: {
-      type: Sequelize.BOOLEAN,
-      defaultValue: true,
+    status: {
+      type: Sequelize.STRING,
+      defaultValue: 'work',
     },
     code: {
       type: Sequelize.STRING,

@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { CustomError, TypeError } = require('../models/customError.model');
 const Package = db.packages;
+const Payments = db.payments;
 const User = db.users;
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -20,11 +21,19 @@ class PackageController {
         console.log(e);
       });
   }
-  async paymentSuccess(req, res) {
-    const {} = req.body;
-    console.log('Wm PARAMS', req.body);
-    res.send('YES');
+
+  async getPayments(req, res) {
+    const tokenData = jwt.verify(req.headers['request_token'], process.env.ADD_CARD_SECRET, (err, tokenData) => {
+      if (err) {
+        throw new CustomError(403, TypeError.PROBLEM_WITH_TOKEN);
+      }
+      return tokenData;
+    });
+
+    const allPayms = await Payments.findAll({ where: { userId: tokenData?.id } });
+    res.json(allPayms);
   }
+
   async paymentProcess(req, res) {
     const { LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, LMI_PAYER_PURSE, LMI_PAYER_WM, LMI_HASH, token } = req.body;
     if (LMI_PAYEE_PURSE === 'Z157035074475') {
@@ -33,9 +42,9 @@ class PackageController {
       console.log(LMI_HASH);
       const hashGen = crypto.createHash('sha256').update(hashStr).digest('hex').toUpperCase();
 
-      if (hashGen != LMI_HASH) {
+      if (hashGen == LMI_HASH) {
         console.log('HASK OK');
-        const tokenData = jwt.verify(token, 'secret-jwt-pass', (err, tokenData) => {
+        const tokenData = jwt.verify(token, process.env.SECRET_TOKEN, (err, tokenData) => {
           if (err) {
             throw new CustomError(400);
           }
@@ -46,26 +55,32 @@ class PackageController {
           where: {
             id: tokenData?.id,
             email: tokenData?.email,
+            active: true,
           },
         });
         if (findUser) {
           console.log('FIND - OK');
           const rate = await axios.get('https://idv-back.herokuapp.com/v1/payment/rate').then((data) => data.data);
-          const rubCurrent = parseFloat(rate?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
 
+          const rubCurrent = parseFloat(rate?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
+          if (isNaN(rubCurrent)) {
+            throw new CustomError(400);
+          }
           const updateBalance = parseFloat(findUser?.balance) + parseFloat(rubCurrent);
-          console.log(rubCurrent);
-          console.log(updateBalance);
-          console.log(findUser?.balance);
+
           await User.update(
             { balance: updateBalance.toFixed(2) },
             {
               where: {
                 id: findUser?.id,
                 email: findUser?.email,
+                active: true,
               },
             },
           );
+          const newPayment = { number: LMI_SYS_TRANS_NO, date: new Date(), price: updateBalance.toFixed(2) };
+          await Payment.create(newPayment);
+
           res.send('YES');
         } else {
           console.log('FIND - ERROR');

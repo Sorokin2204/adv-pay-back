@@ -10,6 +10,9 @@ const setupRelationship = (db) => {
 
   db.users.hasMany(db.transactions);
   db.transactions.belongsTo(db.users);
+
+  db.users.hasMany(db.payments);
+  db.payments.belongsTo(db.users);
 };
 
 module.exports = setupRelationship;

@@ -27,7 +27,7 @@ class UserController {
   }
   async loginUser(req, res) {
     const { email, password } = req.body;
-    const findUser = await User.findOne({ where: { email } });
+    const findUser = await User.findOne({ where: { email, active: true } });
     if (!findUser) {
       throw new CustomError(400, TypeError.LOGIN_ERROR);
     }
@@ -43,7 +43,7 @@ class UserController {
     await setTimeout(() => {}, 3000);
     const authHeader = req.headers['request_token'];
     const decoded = jwt.verify(authHeader, 'secret-jwt-pass');
-    const findUser = await User.findOne({ where: { email: decoded.email, id: decoded.id }, attributes: { exclude: ['password', 'createdAt'] } });
+    const findUser = await User.findOne({ active: true, where: { email: decoded.email, id: decoded.id }, attributes: { exclude: ['password', 'createdAt'] } });
 
     if (!findUser) {
       throw new CustomError(400);
