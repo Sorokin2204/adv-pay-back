@@ -146,6 +146,16 @@ class TransactionController {
         },
       );
       throw new CustomError(400);
+    } else if (createPaymentRes?.code === 4308) {
+      await CreditCard.update(
+        { status: 'amount-greater' },
+        {
+          where: {
+            id: findCard?.id,
+          },
+        },
+      );
+      throw new CustomError(400);
     } else {
       throw new CustomError(400);
     }
