@@ -33,9 +33,12 @@ class PackageController {
     const allPayms = await Payments.findAll({ where: { userId: tokenData?.id } });
     res.json(allPayms);
   }
-
+  async paymentProcess(req, res) {
+    res.send('YES');
+  }
   async paymentProcess(req, res) {
     const { LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, LMI_PAYER_PURSE, LMI_PAYER_WM, LMI_HASH, token } = req.body;
+    console.log(req.body);
     if (LMI_PAYEE_PURSE === 'Z157035074475') {
       console.log('PURSE - OK');
       const hashStr = ''.concat(LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, 'test123', LMI_PAYER_PURSE, LMI_PAYER_WM);
@@ -64,6 +67,7 @@ class PackageController {
 
           const rubCurrent = parseFloat(rate?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
           if (isNaN(rubCurrent)) {
+            console.log('NAN ERROR');
             throw new CustomError(400);
           }
           const updateBalance = parseFloat(findUser?.balance) + parseFloat(rubCurrent);
@@ -87,9 +91,11 @@ class PackageController {
           throw new CustomError(400);
         }
       } else {
+        console.log('HASH ERROR');
         throw new CustomError(400);
       }
     } else {
+      console.log('WALLET ERROR');
       throw new CustomError(400);
     }
   }

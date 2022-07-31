@@ -8,7 +8,7 @@ const { errorWrapper } = require('../middleware/customError');
 router.get('/payment/rate', errorWrapper(paymentController.getWmRate));
 
 router.get('/payment/list', errorWrapper(auth), errorWrapper(paymentController.getPayments));
-
+router.post('/payment/success', errorWrapper(paymentController.paymentSuccess));
 router.post('/payment/process', errorWrapper(paymentController.paymentProcess));
 
 module.exports = router;
