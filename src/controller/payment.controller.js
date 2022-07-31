@@ -50,12 +50,22 @@ class PackageController {
         });
         if (findUser) {
           console.log('FIND - OK');
-          console.log(findUser);
           const rate = await axios.get('https://idv-back.herokuapp.com/v1/payment/rate').then((data) => data.data);
-          console.log(rate);
-          res.send('YES');
+          const rubCurrent = parseFloat(rate?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
 
-          //   const updateBalance = parseFloat(findUserRepeat?.balance).toFixed(2) - parseFloat(findPackage?.price).toFixed(2);
+          const updateBalance = parseFloat(findUser?.balance).toFixed(2) + parseFloat(rubCurrent).toFixed(2);
+          console.log(rubCurrent);
+          console.log(updateBalance);
+          await User.findOne(
+            { balance: updateBalance },
+            {
+              where: {
+                id: findUser?.id,
+                email: findUser?.email,
+              },
+            },
+          );
+          res.send('YES');
         } else {
           console.log('FIND - ERROR');
           res.send('NO');
