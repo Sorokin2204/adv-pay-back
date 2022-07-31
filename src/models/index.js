@@ -42,9 +42,3 @@ db.creditCards = require('./creditCard.model')(sequelize, Sequelize);
 setupRelationship(db);
 
 module.exports = db;
-
-
-git add .
-git commit -m "wm"
-git push heroku master
-heroku logs --tail
