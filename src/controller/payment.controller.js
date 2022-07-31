@@ -33,7 +33,7 @@ class PackageController {
     const allPayms = await Payments.findAll({ where: { userId: tokenData?.id } });
     res.json(allPayms);
   }
-  async paymentProcess(req, res) {
+  async paymentSuccess(req, res) {
     res.send('YES');
   }
   async paymentProcess(req, res) {
