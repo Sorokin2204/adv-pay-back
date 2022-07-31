@@ -57,7 +57,7 @@ class PackageController {
           console.log(rubCurrent);
           console.log(updateBalance);
           console.log(findUser?.balance);
-          await User.findOne(
+          await User.update(
             { balance: updateBalance.toFixed(2) },
             {
               where: {
