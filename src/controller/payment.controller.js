@@ -33,7 +33,7 @@ class PackageController {
       console.log(LMI_HASH);
       const hashGen = crypto.createHash('sha256').update(hashStr).digest('hex').toUpperCase();
 
-      if (hashGen == LMI_HASH) {
+      if (hashGen != LMI_HASH) {
         console.log('HASK OK');
         const tokenData = jwt.verify(token, 'secret-jwt-pass', (err, tokenData) => {
           if (err) {
