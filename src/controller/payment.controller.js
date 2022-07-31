@@ -53,11 +53,12 @@ class PackageController {
           const rate = await axios.get('https://idv-back.herokuapp.com/v1/payment/rate').then((data) => data.data);
           const rubCurrent = parseFloat(rate?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
 
-          const updateBalance = parseFloat(findUser?.balance).toFixed(2) + parseFloat(rubCurrent).toFixed(2);
+          const updateBalance = parseFloat(findUser?.balance) + parseFloat(rubCurrent);
           console.log(rubCurrent);
           console.log(updateBalance);
+          console.log(findUser?.balance);
           await User.findOne(
-            { balance: updateBalance },
+            { balance: updateBalance.toFixed(2) },
             {
               where: {
                 id: findUser?.id,
