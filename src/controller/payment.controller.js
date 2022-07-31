@@ -89,7 +89,7 @@ class PackageController {
             },
           );
           const newPayment = { number: LMI_SYS_TRANS_NO, date: new Date(), price: updateBalance.toFixed(2) };
-          await Payment.create(newPayment);
+          await Payments.create(newPayment);
 
           res.send('YES');
         } else {
