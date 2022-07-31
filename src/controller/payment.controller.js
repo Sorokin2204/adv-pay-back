@@ -1,5 +1,6 @@
 const db = require('../models');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { CustomError, TypeError } = require('../models/customError.model');
 const Package = db.packages;
@@ -24,8 +25,14 @@ class PackageController {
     res.send('YES');
   }
   async paymentProcess(req, res) {
-    const {} = req.body;
-    console.log('Wm PARAMS', req.body);
+    const { LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, LMI_PAYER_PURSE, LMI_PAYER_WM } = req.body;
+    if (LMI_PAYEE_PURSE === 'Z157035074475') {
+      const hashStr = ''.concat(LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, 'test123', LMI_PAYER_PURSE, LMI_PAYER_WM);
+      console.log(LMI_HASH);
+      const hashGen = crypto.createHash('hashStr').update(hashStr);
+      console.log(hashGen);
+      console.log(hashGen === LMI_HASH);
+    }
     res.send('YES');
   }
 }
