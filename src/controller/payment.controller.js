@@ -28,18 +28,20 @@ class PackageController {
   async paymentProcess(req, res) {
     const { LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, LMI_PAYER_PURSE, LMI_PAYER_WM, LMI_HASH, token } = req.body;
     if (LMI_PAYEE_PURSE === 'Z157035074475') {
+      console.log('PURSE - OK');
       const hashStr = ''.concat(LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, 'test123', LMI_PAYER_PURSE, LMI_PAYER_WM);
       console.log(LMI_HASH);
       const hashGen = crypto.createHash('sha256').update(hashStr).digest('hex').toUpperCase();
 
       if (hashGen == LMI_HASH) {
+        console.log('HASK OK');
         const tokenData = jwt.verify(token, 'secret-jwt-pass', (err, tokenData) => {
           if (err) {
             res.send('NO');
           }
           return tokenData;
         });
-
+        console.log('TOKEN - OK');
         const findUser = await User.findOne({
           where: {
             id: tokenData?.id,
@@ -47,9 +49,15 @@ class PackageController {
           },
         });
         if (findUser) {
+          console.log('FIND - OK');
           console.log(findUser);
+          const rate = await axios.get('https://idv-back.herokuapp.com/v1/payment/rate').then((data) => data.data);
+          console.log(rate);
           res.send('YES');
+
+          //   const updateBalance = parseFloat(findUserRepeat?.balance).toFixed(2) - parseFloat(findPackage?.price).toFixed(2);
         } else {
+          console.log('FIND - ERROR');
           res.send('NO');
         }
       } else {
