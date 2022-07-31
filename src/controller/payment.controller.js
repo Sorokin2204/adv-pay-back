@@ -19,6 +19,12 @@ class PackageController {
       });
   }
   async paymentSuccess(req, res) {
+    const {} = req.body;
+    console.log('Wm PARAMS', req.body);
+    res.send('YES');
+  }
+  async paymentProcess(req, res) {
+    const {} = req.body;
     console.log('Wm PARAMS', req.body);
     res.send('YES');
   }

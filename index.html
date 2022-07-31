@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <form method="POST" action="https://merchant.webmoney.ru/lmi/payment_utf.asp?at=authtype_16" accept-charset="utf-8">
+      <input type="hidden" name="LMI_PAYMENT_AMOUNT" value="10" />
+      <input type="hidden" name="LMI_PAYMENT_DESC" value="платеж по счету" />
+      <input type="hidden" name="LMI_PAYMENT_NO" value="1234" />
+      <input type="hidden" name="LMI_PAYEE_PURSE" value="Z157035074475" />
+      <input type="hidden" name="LMI_SIM_MODE" value="0" />
+      <input type="submit" />
+    </form>
+  </body>
+</html>
