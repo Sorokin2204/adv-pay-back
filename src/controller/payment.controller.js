@@ -35,7 +35,7 @@ class PackageController {
       if (hashGen == LMI_HASH) {
         const tokenData = jwt.verify(token, 'secret-jwt-pass', (err, tokenData) => {
           if (err) {
-            res.json('NO');
+            res.text('NO');
           }
           return tokenData;
         });
@@ -48,13 +48,13 @@ class PackageController {
         });
         if (findUser) {
           console.log(findUser);
-          res.json('YES');
+          res.text('YES');
         } else {
-          res.json('NO');
+          res.text('NO');
         }
       }
     }
-    res.json('NO');
+    res.text('NO');
   }
 }
 
