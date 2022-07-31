@@ -24,7 +24,7 @@ class TransactionController {
     if (!findCard) {
       throw new CustomError(404, TypeError.PACKAGE_NOT_ACTIVE);
     }
-    const tokenData = jwt.verify(tokenHeader, 'secret-jwt-pass', (err, tokenData) => {
+    const tokenData = jwt.verify(tokenHeader, process.env.SECRET_TOKEN, (err, tokenData) => {
       if (err) {
         throw new CustomError(403, TypeError.PROBLEM_WITH_TOKEN);
       }
@@ -152,7 +152,7 @@ class TransactionController {
   }
 
   async getTransactions(req, res) {
-    const tokenData = jwt.verify(req.headers['request_token'], 'secret-jwt-pass', (err, tokenData) => {
+    const tokenData = jwt.verify(req.headers['request_token'], process.env.SECRET_TOKEN, (err, tokenData) => {
       if (err) {
         throw new CustomError(403, TypeError.PROBLEM_WITH_TOKEN);
       }

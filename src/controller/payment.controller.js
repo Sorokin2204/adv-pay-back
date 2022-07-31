@@ -51,8 +51,10 @@ class PackageController {
 
       if (hashGen == LMI_HASH) {
         console.log('HASK OK');
+        console.log(process.env.SECRET_TOKEN);
         const tokenData = jwt.verify(token, process.env.SECRET_TOKEN, (err, tokenData) => {
           if (err) {
+            console.log('TOKEN - ERROR');
             throw new CustomError(400);
           }
           return tokenData;

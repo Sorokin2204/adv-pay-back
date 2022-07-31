@@ -10,7 +10,7 @@ async function auth(req, res, next) {
   if (!authHeader) {
     throw new CustomError(401, TypeError.PROBLEM_WITH_TOKEN);
   }
-  const tokenData = jwt.verify(authHeader, 'secret-jwt-pass', (err, tokenData) => {
+  const tokenData = jwt.verify(authHeader, process.env.SECRET_TOKEN, (err, tokenData) => {
     if (err) {
       throw new CustomError(403, TypeError.PROBLEM_WITH_TOKEN);
     }

@@ -22,7 +22,7 @@ class UserController {
       password: passHash,
       name,
     });
-    const token = jwt.sign({ id: newUser.id, email: newUser.email }, 'secret-jwt-pass', { expiresIn: '1h' });
+    const token = jwt.sign({ id: newUser.id, email: newUser.email }, process.env.SECRET_TOKEN, { expiresIn: '1h' });
     res.json({ token: token });
   }
   async loginUser(req, res) {
@@ -35,14 +35,14 @@ class UserController {
     if (!passCheck) {
       throw new CustomError(400, TypeError.LOGIN_ERROR);
     }
-    const token = jwt.sign({ id: findUser.id, email: findUser.email }, 'secret-jwt-pass', { expiresIn: '1h' });
+    const token = jwt.sign({ id: findUser.id, email: findUser.email }, process.env.SECRET_TOKEN, { expiresIn: '1h' });
     res.json({ token: token });
   }
 
   async getUser(req, res) {
     await setTimeout(() => {}, 3000);
     const authHeader = req.headers['request_token'];
-    const decoded = jwt.verify(authHeader, 'secret-jwt-pass');
+    const decoded = jwt.verify(authHeader, process.env.SECRET_TOKEN);
     const findUser = await User.findOne({ active: true, where: { email: decoded.email, id: decoded.id }, attributes: { exclude: ['password', 'createdAt'] } });
 
     if (!findUser) {
