@@ -24,9 +24,9 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-db.sequelize.sync().then((se) => {
-  //   reset(db);
-});
+// db.sequelize.sync().then((se) => {
+//   //   reset(db);
+// });
 
 app.use('/v1', userRouter);
 app.use('/v1', packageRouter);
