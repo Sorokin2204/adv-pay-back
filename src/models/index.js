@@ -13,6 +13,8 @@ const config = {
 const sequelize = new Sequelize(config.dbName, config.user, config.pass, {
   host: config.host,
   dialect: 'mysql',
+  charset: 'utf8',
+  collate: 'utf8_general_ci',
   pool: {
     max: 10,
     min: 0,

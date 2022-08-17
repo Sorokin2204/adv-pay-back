@@ -2,11 +2,6 @@ module.exports = (sequelize, Sequelize) => {
   const User = sequelize.define(
     'user',
     {
-      active: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
       name: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -22,6 +17,18 @@ module.exports = (sequelize, Sequelize) => {
       balance: {
         type: Sequelize.FLOAT,
         defaultValue: 0,
+      },
+      deleted: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
+      active: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
+      confirmUrl: {
+        type: Sequelize.STRING,
+        allowNull: false,
       },
     },
     {

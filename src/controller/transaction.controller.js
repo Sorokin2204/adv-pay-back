@@ -12,7 +12,6 @@ class TransactionController {
   async createTranscation(req, res) {
     const tokenHeader = req.headers['request_token'];
     const { packageId, playerId, serverId } = req.body;
-    console.log(req.body);
     if (!packageId || !playerId || !serverId) {
       throw new CustomError(500);
     }
@@ -56,7 +55,6 @@ class TransactionController {
       .catch((result) => {
         throw new CustomError(404, TypeError.ACCOUNT_NOT_FOUND);
       });
-    console.log(checkRes);
     const generatePaymentRes = await axios
       .get(`https://idvpay.com/api/v1/get_pay_url?payMethod=gamecode&payType=netease+gamecode_netease+gamecode&serverId=${checkRes.hostCheck}&roleId=${checkRes.roleCheck}&accountId=${checkRes.accountCheck}&goodsId=h55na.mol.others.${findPackage?.code}echoes&region=&platform=pc`)
       .then((result) => {
@@ -67,7 +65,7 @@ class TransactionController {
         const urlPayment = new URL(result.data.data);
         const paramsPayment = urlPayment.searchParams;
         const idPayment = paramsPayment.get('pay_orderid');
-        console.log(result.data);
+
         return idPayment;
       })
       .catch((err) => {
@@ -86,7 +84,6 @@ class TransactionController {
       .catch(() => {
         throw new CustomError(400);
       });
-    console.log(createPaymentRes);
     if (createPaymentRes?.code === 1000) {
       await CreditCard.update(
         { status: 'success' },

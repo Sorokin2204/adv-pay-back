@@ -16,7 +16,7 @@ async function auth(req, res, next) {
     }
     return tokenData;
   });
-  const loginFind = await User.findOne({ raw: true, where: { active: true, email: tokenData.email, id: tokenData.id } });
+  const loginFind = await User.findOne({ raw: true, where: { active: true, deleted: false, email: tokenData.email, id: tokenData.id } });
   if (!loginFind) {
     throw new CustomError(403, TypeError.PROBLEM_WITH_TOKEN);
   }
