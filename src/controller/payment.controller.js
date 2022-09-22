@@ -44,65 +44,59 @@ class PackageController {
         res.send('YES');
       }
     } else {
-      try {
-        console.log('1.ОПЛАТА НАЧИЛАСЬ');
-        const hashStr = ''.concat(LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, 'test123', LMI_PAYER_PURSE, LMI_PAYER_WM);
-        const hashGen = crypto.createHash('sha256').update(hashStr).digest('hex').toUpperCase();
+      console.log('1.ОПЛАТА НАЧИЛАСЬ');
+      const hashStr = ''.concat(LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, 'test123', LMI_PAYER_PURSE, LMI_PAYER_WM);
+      const hashGen = crypto.createHash('sha256').update(hashStr).digest('hex').toUpperCase();
 
-        if (hashGen == LMI_HASH) {
-          console.log('2.ХЭШ ПРОВЕРЕН');
-          const tokenData = jwt.verify(token, process.env.SECRET_TOKEN, (err, tokenData) => {
-            if (err) {
-              console.error('3.ОШИБКА ТОКЕНА ЮЗЕРА');
-              throw new CustomError(400);
-            }
-            return tokenData;
-          });
-          console.log('3.ТОКЕН ПРОВЕРЕН');
-          const findUser = await User.findOne({
-            where: {
-              id: tokenData?.id,
-              email: tokenData?.email,
-              active: true,
-            },
-          });
-          if (findUser) {
-            console.log('4.ПОЛЬЗОВАТЕЛЬ НАЙДЕН');
-            const rate = await axios.get(`${process.env.API_URL}/payment/rate`).then((data) => data.data);
-
-            const rubCurrent = parseFloat(rate?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
-            if (isNaN(rubCurrent)) {
-              console.error('5.ОШИБКА NAN СЧЕТА');
-              throw new CustomError(400);
-            }
-            const updateBalance = parseFloat(findUser?.balance) + parseFloat(rubCurrent);
-
-            await User.update(
-              { balance: updateBalance.toFixed(2) },
-              {
-                where: {
-                  id: findUser?.id,
-                  email: findUser?.email,
-                  active: true,
-                },
-              },
-            );
-            const newPayment = { number: LMI_SYS_TRANS_NO, date: new Date(), price: parseFloat(rubCurrent).toFixed(2), userId: findUser?.id };
-            await Payments.create(newPayment);
-
-            res.send('YES');
-          } else {
-            console.error('3.ОШИБКА ПОИСКА ПОЛЬЗОВАТЕЛЯ');
+      if (hashGen == LMI_HASH) {
+        console.log('2.ХЭШ ПРОВЕРЕН');
+        const tokenData = jwt.verify(token, process.env.SECRET_TOKEN, (err, tokenData) => {
+          if (err) {
+            console.error('3.ОШИБКА ТОКЕНА ЮЗЕРА');
             throw new CustomError(400);
           }
+          return tokenData;
+        });
+        console.log('3.ТОКЕН ПРОВЕРЕН');
+        const findUser = await User.findOne({
+          where: {
+            id: tokenData?.id,
+            email: tokenData?.email,
+            active: true,
+          },
+        });
+        if (findUser) {
+          console.log('4.ПОЛЬЗОВАТЕЛЬ НАЙДЕН');
+          const rate = await axios.get(`${process.env.API_URL}/payment/rate`).then((data) => data.data);
+
+          const rubCurrent = parseFloat(rate?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
+          if (isNaN(rubCurrent)) {
+            console.error('5.ОШИБКА NAN СЧЕТА');
+            throw new CustomError(400);
+          }
+          const updateBalance = parseFloat(findUser?.balance) + parseFloat(rubCurrent);
+
+          await User.update(
+            { balance: updateBalance.toFixed(2) },
+            {
+              where: {
+                id: findUser?.id,
+                email: findUser?.email,
+                active: true,
+              },
+            },
+          );
+          const newPayment = { number: LMI_SYS_TRANS_NO, date: new Date(), price: parseFloat(rubCurrent).toFixed(2), userId: findUser?.id };
+          await Payments.create(newPayment);
+
+          res.send('YES');
         } else {
-          console.error('2.ОШИБКА ХЭША');
+          console.error('3.ОШИБКА ПОИСКА ПОЛЬЗОВАТЕЛЯ');
           throw new CustomError(400);
         }
-      } catch (error) {
-        console.error(`PAYMENT ERROR № ${LMI_SYS_TRANS_NO}:`);
-        console.error(error.message);
-        res.send('NO');
+      } else {
+        console.error('2.ОШИБКА ХЭША');
+        throw new CustomError(400);
       }
     }
   }
