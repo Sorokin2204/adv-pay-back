@@ -14,7 +14,8 @@ const { CustomError, TypeError } = require('./src/models/customError.model');
 require('dotenv').config();
 
 var corsOptions = {
-  origin: ['https://donate-gold.ru'],
+  // origin: ['https://donate-gold.ru'],
+  origin: '*',
 };
 app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({ extended: true }));

@@ -54,14 +54,15 @@ class UserController {
     if (!findUser) {
       throw new CustomError(400, TypeError.LOGIN_ERROR);
     }
-    if (!findUser?.active) {
-      throw new CustomError(400, TypeError.ACCOUNT_NOT_ACTIVE);
-    }
 
     const passCheck = await bcrypt.compare(password, findUser.password);
     if (!passCheck) {
       throw new CustomError(400, TypeError.LOGIN_ERROR);
     }
+    if (!findUser?.active) {
+      throw new CustomError(400, TypeError.ACCOUNT_NOT_ACTIVE);
+    }
+
     const token = jwt.sign({ id: findUser.id, email: findUser.email }, process.env.SECRET_TOKEN, { expiresIn: '1h' });
     res.json({ token: token });
   }
