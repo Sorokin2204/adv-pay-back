@@ -11,6 +11,13 @@ const User = db.users;
 const userBodyProps = ['firstName', 'lastName', 'photo', 'dateOfBirth', 'about'];
 
 class UserController {
+  async getVkComments(req, res) {
+    const { offset } = req.query;
+    const data = await axios.get(`http://api.vk.com/method/board.getComments?v=5.131&group_id=213480825&topic_id=48841807&access_token=484899304848993048489930764b584f4944848484899302b79180d8fb65f87bb71e34a&extended=1&count=30&lang=0&sort=desc&offset=${offset}`);
+
+    res.json(data.data);
+  }
+
   async createUser(req, res) {
     const { email, password, name } = req.body;
     const passHash = await bcrypt.hash(password, 3);

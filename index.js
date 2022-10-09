@@ -11,6 +11,7 @@ const creditCardRouter = require('./src/routes/creditCard.routes');
 const cheerio = require('cheerio');
 const { handleError } = require('./src/middleware/customError');
 const { CustomError, TypeError } = require('./src/models/customError.model');
+const { default: axios } = require('axios');
 require('dotenv').config();
 
 var corsOptions = {
@@ -40,3 +41,19 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
+// const rateGet = async () => {
+//   const url = `https://exchanger.web.money/asp/wmlist.asp?exchtype=117`;
+//   const rate = await axios
+//     .get(url)
+//     .then((response) => {
+//       let $ = cheerio.load(response.data);
+//       const rateData = $('#exchtypebtn117 ~ span').text();
+//       return rateData;
+//       // res.json($('#exchtypebtn117 ~ span').text());
+//     })
+//     .catch(function (e) {
+//       console.log(e);
+//     });
+//   return rate;
+// };
+// console.log(await rateGet());

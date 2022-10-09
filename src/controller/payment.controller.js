@@ -44,20 +44,21 @@ class PackageController {
         res.send('YES');
       }
     } else {
-      console.log('1.ОПЛАТА НАЧИЛАСЬ');
+      console.log('PURSE - OK');
       const hashStr = ''.concat(LMI_PAYEE_PURSE, LMI_PAYMENT_AMOUNT, LMI_PAYMENT_NO, LMI_MODE, LMI_SYS_INVS_NO, LMI_SYS_TRANS_NO, LMI_SYS_TRANS_DATE, 'test123', LMI_PAYER_PURSE, LMI_PAYER_WM);
+      console.log(LMI_HASH);
       const hashGen = crypto.createHash('sha256').update(hashStr).digest('hex').toUpperCase();
 
       if (hashGen == LMI_HASH) {
-        console.log('2.ХЭШ ПРОВЕРЕН');
+        console.log('HASK OK');
         const tokenData = jwt.verify(token, process.env.SECRET_TOKEN, (err, tokenData) => {
           if (err) {
-            console.error('3.ОШИБКА ТОКЕНА ЮЗЕРА');
+            console.log('TOKEN - ERROR');
             throw new CustomError(400);
           }
           return tokenData;
         });
-        console.log('3.ТОКЕН ПРОВЕРЕН');
+        console.log('TOKEN - OK');
         const findUser = await User.findOne({
           where: {
             id: tokenData?.id,
@@ -66,12 +67,12 @@ class PackageController {
           },
         });
         if (findUser) {
-          console.log('4.ПОЛЬЗОВАТЕЛЬ НАЙДЕН');
-          const rate = await axios.get(`${process.env.API_URL}/payment/rate`).then((data) => data.data);
+          console.log('FIND - OK');
+          // const rate = await axios.get('https://idv-back.herokuapp.com/v1/payment/rate').then((data) => data.data);
 
-          const rubCurrent = parseFloat(rate?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
+          const rubCurrent = parseFloat('58,1756'?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
           if (isNaN(rubCurrent)) {
-            console.error('5.ОШИБКА NAN СЧЕТА');
+            console.log('NAN ERROR');
             throw new CustomError(400);
           }
           const updateBalance = parseFloat(findUser?.balance) + parseFloat(rubCurrent);
@@ -86,16 +87,16 @@ class PackageController {
               },
             },
           );
-          const newPayment = { number: LMI_SYS_TRANS_NO, date: new Date(), price: parseFloat(rubCurrent).toFixed(2), userId: findUser?.id };
+          const newPayment = { number: LMI_SYS_TRANS_NO, date: new Date(), price: rubCurrent.toFixed(2), userId: findUser?.id };
           await Payments.create(newPayment);
 
           res.send('YES');
         } else {
-          console.error('3.ОШИБКА ПОИСКА ПОЛЬЗОВАТЕЛЯ');
+          console.log('FIND - ERROR');
           throw new CustomError(400);
         }
       } else {
-        console.error('2.ОШИБКА ХЭША');
+        console.log('HASH ERROR');
         throw new CustomError(400);
       }
     }
