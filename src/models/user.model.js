@@ -30,6 +30,11 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      attachedReferralCode: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        defaultValue: null,
+      },
     },
     {
       updatedAt: false,

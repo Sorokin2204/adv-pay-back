@@ -27,6 +27,20 @@ class MailService {
                 `,
     });
   }
+  async sendResetPassword(to, pass) {
+    await this.transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to,
+      subject: 'Сброс пароля на ' + process.env.SITE_URL,
+      text: '',
+      html: `
+                    <div>
+                        <h1>Здравствуйте!</h1>
+                       <p style='font-size: 20px'>Ваш новый пароль: <b > ${pass}</b></p>
+                    </div>
+                `,
+    });
+  }
 }
 
 module.exports = new MailService();

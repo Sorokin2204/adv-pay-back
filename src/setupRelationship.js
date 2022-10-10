@@ -13,6 +13,11 @@ const setupRelationship = (db) => {
 
   db.users.hasMany(db.payments);
   db.payments.belongsTo(db.users);
+
+  db.users.hasOne(db.referralCodes);
+  db.referralCodes.belongsTo(db.users);
+  db.users.hasMany(db.referralTransactions);
+  db.referralTransactions.belongsTo(db.users);
 };
 
 module.exports = setupRelationship;

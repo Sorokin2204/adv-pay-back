@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const { CustomError, TypeError } = require('../models/customError.model');
 const Package = db.packages;
 const Payments = db.payments;
+const ReferralCode = db.referralCodes;
+const ReferralTransactions = db.referralTransactions;
 const User = db.users;
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -89,7 +91,41 @@ class PackageController {
           );
           const newPayment = { number: LMI_SYS_TRANS_NO, date: new Date(), price: rubCurrent.toFixed(2), userId: findUser?.id };
           await Payments.create(newPayment);
+          if (findUser?.attachedReferralCode) {
+            const findReferralCode = await ReferralCode.findOne({ where: { code: findUser?.attachedReferralCode, dateEnd: { $gt: new Date() } } });
+            if (findReferralCode && findReferralCode?.userId) {
+              const userReferral = await User.findOne({
+                where: {
+                  id: findReferralCode?.userId,
+                  active: true,
+                  deleted: false,
+                },
+              });
+              if (userReferral) {
+                const percentReferralSum = parseFloat((1 / 100) * rubCurrent).toFixed(2);
 
+                if (!isNaN(percentReferralSum)) {
+                  await User.update(
+                    {
+                      balance: parseFloat(parseFloat(userReferral?.balance) + parseFloat(percentReferralSum)).toFixed(2),
+                    },
+                    {
+                      where: {
+                        id: findReferralCode?.userId,
+                      },
+                    },
+                  );
+                  await ReferralTransactions.create({
+                    date: new Date(),
+                    referralCode: findUser?.attachedReferralCode,
+                    referralSum: percentReferralSum,
+                    userId: userReferral?.id,
+                    transactionId: 4,
+                  });
+                }
+              }
+            }
+          }
           res.send('YES');
         } else {
           console.log('FIND - ERROR');
