@@ -57,3 +57,11 @@ app.listen(PORT, () => {
 //   return rate;
 // };
 // console.log(await rateGet());
+
+// .then((response) => {
+
+//   res.json($('#exchtypebtn117 ~ span').text());
+// })
+// .catch(function (e) {
+//   console.log(e);
+// });

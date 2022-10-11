@@ -12,21 +12,27 @@ const mailService = require('../services/mail-service');
 const User = db.users;
 const ReferralCode = db.referralCodes;
 const ReferralTransactions = db.referralTransactions;
-
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_AUTH_KEY);
 const userBodyProps = ['firstName', 'lastName', 'photo', 'dateOfBirth', 'about'];
 
 class UserController {
   async getVkComments(req, res) {
     const { offset } = req.query;
-    const data = await axios.get(`http://api.vk.com/method/board.getComments?v=5.131&group_id=213480825&topic_id=48841807&access_token=484899304848993048489930764b584f4944848484899302b79180d8fb65f87bb71e34a&extended=1&count=30&lang=0&sort=desc&offset=${offset}`);
+    const data = await axios.get(`http://api.vk.com/method/board.getComments?v=5.131&group_id=213480825&topic_id=48841807&access_token=${process.env.VK_SERVICE_KEY}&extended=1&count=30&lang=0&sort=desc&offset=${offset}`);
 
     res.json(data.data);
   }
 
   async createUser(req, res) {
-    const { email, password, name, referralCode } = req.body;
+    const { email, password, name, referralCode, gToken } = req.body;
     const passHash = await bcrypt.hash(password, 3);
     const findUserEmail = await User.findOne({ where: { email } });
+    const googleResponse = await axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${process.env.GOOGLE_RECAPTCHA_SECRET_KEY}&response=${gToken}`);
+
+    if (!googleResponse.data?.success) {
+      throw new CustomError(400, TypeError.CAPTHA_ERROR);
+    }
     if (findUserEmail) {
       throw new CustomError(400, TypeError.USER_EXIST);
     }
@@ -98,7 +104,8 @@ class UserController {
   }
   async loginUser(req, res) {
     const { email, password } = req.body;
-    const findUser = await User.findOne({ where: { email, deleted: false } });
+
+    const findUser = await User.findOne({ where: { email, deleted: false, isGoogleAuth: false } });
     if (!findUser) {
       throw new CustomError(400, TypeError.LOGIN_ERROR);
     }
@@ -114,6 +121,62 @@ class UserController {
     const token = jwt.sign({ id: findUser.id, email: findUser.email }, process.env.SECRET_TOKEN, { expiresIn: '24h' });
     res.json({ token: token });
   }
+
+  async googleAuth(req, res) {
+    const { gToken, referralCode } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken: gToken,
+      audience: process.env.CLIENT_ID,
+    });
+    const googleData = ticket.getPayload();
+
+    const findUserEmail = await User.findOne({ where: { email: googleData?.email, isGoogleAuth: false } });
+    if (findUserEmail) {
+      throw new CustomError(400, TypeError.USER_EXIST);
+    }
+    const findUserEmailAndName = await User.findOne({ where: { email: googleData?.email, name: googleData?.name, isGoogleAuth: true } });
+
+    if (findUserEmailAndName) {
+      const token = jwt.sign({ id: findUserEmailAndName.id, email: findUserEmailAndName.email }, process.env.SECRET_TOKEN, { expiresIn: '24h' });
+      res.json({ token: token });
+    } else {
+      if (referralCode) {
+        const findReferralCode = await ReferralCode.findOne({ where: { code: referralCode.toUpperCase(), dateEnd: { $gt: new Date() } } });
+        if (!findReferralCode) {
+          throw new CustomError(404, TypeError.NOT_FOUND_REFERRAL_CODE);
+        }
+      }
+      const newPassword = generator.generate({
+        length: 20,
+      });
+      const passHash = await bcrypt.hash(newPassword, 3);
+      const newUser = await User.create({
+        email: googleData?.email,
+        password: passHash,
+        name: googleData?.name,
+        confirmUrl: null,
+        active: true,
+        isGoogleAuth: true,
+        ...(referralCode && { attachedReferralCode: referralCode }),
+        ...(referralCode && { balance: 50 }),
+      });
+      const newReferralCode = generator
+        .generate({
+          length: 5,
+          numbers: false,
+          uppercase: true,
+        })
+        .toUpperCase();
+      const selfReferralCode = await ReferralCode.create({
+        code: newReferralCode,
+        dateEnd: moment().add(30, 'days').toDate(),
+        userId: newUser?.id,
+      });
+      const token = jwt.sign({ id: newUser.id, email: newUser.email }, process.env.SECRET_TOKEN, { expiresIn: '24h' });
+      res.json({ token: token });
+    }
+  }
+
   async resetPassword(req, res) {
     const { email, name } = req.body;
     const findUser = await User.findOne({ where: { email, name, active: true, deleted: false } });
@@ -139,6 +202,8 @@ class UserController {
   async getUser(req, res) {
     const authHeader = req.headers['request_token'];
     const decoded = jwt.verify(authHeader, process.env.SECRET_TOKEN);
+
+    console.log($('#exchtypebtn117 ~ span').text());
     const findSelfReferralCode = await ReferralCode.findOne({
       where: {
         userId: decoded.id,
@@ -226,6 +291,3 @@ class UserController {
 }
 
 module.exports = new UserController();
-//     https://idvpay.com/api/v1/get_pay_url?payMethod=gamecode&payType=netease+gamecode_netease+gamecode&serverId=10102&roleId=234434&accountId=173822576&goodsId=h55na.mol.others.60echoes&region=&platform=pc
-
-// https://idvpay.com/api/v1/get_pay_url?payMethod=gamecode&payType=netease+gamecode_netease+gamecode&serverId=10102&roleId=234434&accountId=173822576&goodsId=h55na.mol.others.300echoes&region=&platform=pc

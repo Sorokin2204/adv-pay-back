@@ -22,13 +22,17 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
       },
+      isGoogleAuth: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
       active: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
       },
       confirmUrl: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       attachedReferralCode: {
         type: Sequelize.STRING,

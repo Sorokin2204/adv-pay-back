@@ -13,5 +13,6 @@ router.get('/vk-comments', userController.getVkComments);
 router.get('/user/check/:id/:server', errorWrapper(auth), errorWrapper(userController.checkAccount));
 router.post('/user/buy', errorWrapper(userController.payment));
 router.post('/user/reset-password', errorWrapper(userController.resetPassword));
+router.post('/user/google-auth', errorWrapper(userController.googleAuth));
 router.post('/user/generate-promo-code', errorWrapper(auth), errorWrapper(userController.generateReferralCode));
 module.exports = router;

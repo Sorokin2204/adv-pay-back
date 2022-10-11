@@ -90,7 +90,7 @@ class PackageController {
             },
           );
           const newPayment = { number: LMI_SYS_TRANS_NO, date: new Date(), price: rubCurrent.toFixed(2), userId: findUser?.id };
-          await Payments.create(newPayment);
+          const createdPayments = await Payments.create(newPayment);
           if (findUser?.attachedReferralCode) {
             const findReferralCode = await ReferralCode.findOne({ where: { code: findUser?.attachedReferralCode, dateEnd: { $gt: new Date() } } });
             if (findReferralCode && findReferralCode?.userId) {
@@ -120,7 +120,7 @@ class PackageController {
                     referralCode: findUser?.attachedReferralCode,
                     referralSum: percentReferralSum,
                     userId: userReferral?.id,
-                    transactionId: 4,
+                    transactionId: createdPayments?.id,
                   });
                 }
               }
