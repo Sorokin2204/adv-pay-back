@@ -85,6 +85,11 @@ class UserController {
     await ReferralCode.update({ code: newReferralCode, dateEnd: moment().add(30, 'days').toDate() }, { where: { userId: decoded?.id } });
     res.json({ success: true });
   }
+
+  async processPaymentCreditCard(req, res) {
+    console.log(req.body);
+    res.json({ success: true });
+  }
   async activate(req, res, next) {
     const activationLink = req.params.link;
     if (!activationLink) {
@@ -203,7 +208,6 @@ class UserController {
     const authHeader = req.headers['request_token'];
     const decoded = jwt.verify(authHeader, process.env.SECRET_TOKEN);
 
-    console.log($('#exchtypebtn117 ~ span').text());
     const findSelfReferralCode = await ReferralCode.findOne({
       where: {
         userId: decoded.id,
