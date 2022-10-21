@@ -41,6 +41,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
+
 // const rateGet = async () => {
 //   const url = `https://exchanger.web.money/asp/wmlist.asp?exchtype=117`;
 //   const rate = await axios
@@ -65,3 +66,25 @@ app.listen(PORT, () => {
 // .catch(function (e) {
 //   console.log(e);
 // });
+
+// const rateGet = async () => {
+//   const url = `https://pay.primepayments.io/API/v1/`;
+//   const rate = await axios
+//     .post(url, {
+//       action: 'initPayment',
+//       project: 1251,
+//       sum: '100',
+//       currency: 'RUB',
+//       innerID: '1234',
+//       email: 'test@test.com',
+//       sign: 'd3d3d07d69bfa25324c9a244a1a7185b',
+//     })
+//     .then((response) => {
+//       console.log(response.data);
+//     })
+//     .catch(function (e) {
+//       console.log(e);
+//     });
+//   return rate;
+// };
+// console.log(rateGet());

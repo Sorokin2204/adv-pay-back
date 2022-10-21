@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const uuid = require('uuid');
 const moment = require('moment');
 const Sequelize = require('sequelize');
+var md5 = require('md5');
 const { CustomError, TypeError } = require('../models/customError.model');
 var generator = require('generate-password');
 const validBodyKeys = require('../utils/validBodyKeys');
@@ -84,6 +85,36 @@ class UserController {
       .toUpperCase();
     await ReferralCode.update({ code: newReferralCode, dateEnd: moment().add(30, 'days').toDate() }, { where: { userId: decoded?.id } });
     res.json({ success: true });
+  }
+
+  async initPaymentCard(req, res) {
+    const { price, payWay } = req.body;
+    const tokenHeader = req.headers['request_token'];
+    const tokenData = jwt.verify(tokenHeader, process.env.SECRET_TOKEN, (err, tokenData) => {
+      if (err) {
+        throw new CustomError(400);
+      }
+      return tokenData;
+    });
+    let postData = {
+      action: 'initPayment',
+      project: 1251,
+      sum: price,
+      currency: 'RUB',
+      returnLink: 1,
+      innerID: tokenData?.id,
+      email: tokenData?.email,
+      payWay,
+    };
+
+    const sign = md5(process.env.SECRET_PAYMENT + postData.action + postData.project + postData.sum + postData.currency + postData.innerID + postData.email + postData.payWay);
+    postData.sign = sign;
+    console.log(postData);
+    const response = await axios.post('https://pay.primepayments.io/API/v1/', postData);
+    if (response?.data?.status === 'ERROR') {
+      throw new CustomError(400);
+    }
+    res.json(response.data);
   }
 
   async processPaymentCreditCard(req, res) {
