@@ -88,7 +88,7 @@ class UserController {
   }
 
   async initPaymentCard(req, res) {
-    const { price, payWay } = req.body;
+    const { price } = req.body;
     const tokenHeader = req.headers['request_token'];
     const tokenData = jwt.verify(tokenHeader, process.env.SECRET_TOKEN, (err, tokenData) => {
       if (err) {
@@ -104,13 +104,17 @@ class UserController {
       returnLink: 1,
       innerID: tokenData?.id,
       email: tokenData?.email,
-      payWay,
+      payWay: '1',
     };
-
     const sign = md5(process.env.SECRET_PAYMENT + postData.action + postData.project + postData.sum + postData.currency + postData.innerID + postData.email + postData.payWay);
     postData.sign = sign;
-    console.log(postData);
-    const response = await axios.post('https://pay.primepayments.io/API/v1/', postData);
+
+    const response = await axios.post('https://pay.primepayments.io/API/v1/', new URLSearchParams(postData), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
     if (response?.data?.status === 'ERROR') {
       throw new CustomError(400);
     }
