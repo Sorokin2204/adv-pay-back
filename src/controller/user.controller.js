@@ -12,6 +12,7 @@ const validBodyKeys = require('../utils/validBodyKeys');
 const mailService = require('../services/mail-service');
 const User = db.users;
 const ReferralCode = db.referralCodes;
+const Payment = db.payments;
 const ReferralTransactions = db.referralTransactions;
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_AUTH_KEY);
@@ -122,8 +123,61 @@ class UserController {
   }
 
   async processPaymentCreditCard(req, res) {
-    console.log(req.body);
-    res.json({ success: true });
+    const { action, orderID, payWay, innerID, sum, webmaster_profit, sign, email } = req.body;
+
+    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    if (ip.substr(0, 7) == '::ffff:') {
+      ip = ip.substr(7);
+    }
+    if (ip === '37.1.217.38' && action === 'order_payed') {
+      const signCheck = md5(process.env.SECRET_PAYMENT_2 + orderID + payWay + innerID + sum + webmaster_profit);
+      if (sign === signCheck) {
+        const findPayment = await Payment.findOne({ where: { userId: innerID, number: orderID } });
+        if (!findPayment) {
+          const findUser = await User.findOne({
+            where: {
+              id: innerID,
+              email: email,
+              active: true,
+            },
+          });
+          if (findUser) {
+            const newBalance = parseFloat(findUser?.balance) + parseFloat(sum);
+            await User.update(
+              { balance: newBalance.toFixed(2) },
+              {
+                where: {
+                  id: innerID,
+                  email: email,
+                  active: true,
+                },
+              },
+            );
+            const newPayment = { number: orderID, price: sum, userId: innerID, date: new Date() };
+            await Payment.create(newPayment);
+            console.log('SUCCESS PAYMENT');
+            console.log(req.body);
+            res.send('OK');
+          } else {
+            console.error('NOT FIND USER ERROR');
+            console.error(req.body);
+            throw new CustomError(400);
+          }
+        } else {
+          console.error('FIND PAYMENT ERROR');
+          console.error(req.body);
+          throw new CustomError(400);
+        }
+      } else {
+        console.error('SIGN ERROR');
+        console.error(req.body);
+        throw new CustomError(400);
+      }
+    } else {
+      console.error('IP INCORRECT ERROR');
+      console.error(req.body);
+      throw new CustomError(400);
+    }
   }
   async activate(req, res, next) {
     const activationLink = req.params.link;
