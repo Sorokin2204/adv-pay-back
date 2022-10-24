@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const uuid = require('uuid');
 const moment = require('moment');
 const Sequelize = require('sequelize');
+const requestIp = require('request-ip');
+const cheerio = require('cheerio');
 var md5 = require('md5');
 const { CustomError, TypeError } = require('../models/customError.model');
 var generator = require('generate-password');
@@ -124,12 +126,9 @@ class UserController {
 
   async processPaymentCreditCard(req, res) {
     const { action, orderID, payWay, innerID, sum, webmaster_profit, sign, email } = req.body;
-
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    if (ip.substr(0, 7) == '::ffff:') {
-      ip = ip.substr(7);
-    }
-    if (ip === '37.1.217.38' && action === 'order_payed') {
+    const clientIp = requestIp.getClientIp(req);
+    console.log(clientIp);
+    if (action === 'order_payed') {
       const signCheck = md5(process.env.SECRET_PAYMENT_2 + orderID + payWay + innerID + sum + webmaster_profit);
       if (sign === signCheck) {
         const findPayment = await Payment.findOne({ where: { userId: innerID, number: orderID } });

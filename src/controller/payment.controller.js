@@ -70,9 +70,10 @@ class PackageController {
         });
         if (findUser) {
           console.log('FIND - OK');
-          // const rate = await axios.get('https://idv-back.herokuapp.com/v1/payment/rate').then((data) => data.data);
-
-          const rubCurrent = parseFloat('58,1756'?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
+          const rateResponse = await axios.get('https://exchanger.web.money/asp/wmlist.asp?exchtype=117');
+          let $ = cheerio.load(rateResponse.data);
+          const rate = $('#exchtypebtn117 ~ span').text();
+          const rubCurrent = parseFloat(rate?.replace(',', '.')) * parseFloat(LMI_PAYMENT_AMOUNT);
           if (isNaN(rubCurrent)) {
             console.log('NAN ERROR');
             throw new CustomError(400);
