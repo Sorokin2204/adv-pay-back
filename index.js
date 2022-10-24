@@ -13,7 +13,8 @@ const { handleError } = require('./src/middleware/customError');
 const { CustomError, TypeError } = require('./src/models/customError.model');
 const { default: axios } = require('axios');
 require('dotenv').config();
-
+const moment = require('moment');
+var generator = require('generate-password');
 var corsOptions = {
   // origin: ['https://donate-gold.ru'],
   origin: '*',
@@ -88,3 +89,30 @@ app.listen(PORT, () => {
 //   return rate;
 // };
 // console.log(rateGet());
+db.users
+  .findAll({
+    attributes: ['id'],
+    raw: true,
+  })
+  .then((listUsers) => {
+    console.log(listUsers);
+    for (let usr of listUsers) {
+      const findCodeRef = db.referralCodes.findOne({ where: { userId: usr.id }, raw: true }).then((cd) => {
+        if (!cd) {
+          console.log('CREATED');
+          const newReferralCode = generator
+            .generate({
+              length: 5,
+              numbers: false,
+              uppercase: true,
+            })
+            .toUpperCase();
+          db.referralCodes.create({
+            code: newReferralCode,
+            dateEnd: moment().add(30, 'days').toDate(),
+            userId: usr.id,
+          });
+        }
+      });
+    }
+  });
