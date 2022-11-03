@@ -153,7 +153,42 @@ class UserController {
               },
             );
             const newPayment = { number: orderID, price: sum, userId: innerID, date: new Date() };
-            await Payment.create(newPayment);
+            const paymentCreated = await Payment.create(newPayment);
+            if (findUser?.attachedReferralCode) {
+              const findReferralCode = await ReferralCode.findOne({ where: { code: findUser?.attachedReferralCode, dateEnd: { $gt: new Date() } } });
+              if (findReferralCode && findReferralCode?.userId) {
+                const userReferral = await User.findOne({
+                  where: {
+                    id: findReferralCode?.userId,
+                    active: true,
+                    deleted: false,
+                  },
+                });
+                if (userReferral) {
+                  const percentReferralSum = parseFloat((1 / 100) * parseFloat(sum)).toFixed(2);
+
+                  if (!isNaN(percentReferralSum)) {
+                    await User.update(
+                      {
+                        balance: parseFloat(parseFloat(userReferral?.balance) + parseFloat(percentReferralSum)).toFixed(2),
+                      },
+                      {
+                        where: {
+                          id: findReferralCode?.userId,
+                        },
+                      },
+                    );
+                    await ReferralTransactions.create({
+                      date: new Date(),
+                      referralCode: findUser?.attachedReferralCode,
+                      referralSum: percentReferralSum,
+                      userId: userReferral?.id,
+                      transactionId: paymentCreated?.id,
+                    });
+                  }
+                }
+              }
+            }
             console.log('SUCCESS PAYMENT');
             console.log(req.body);
             res.send('OK');
