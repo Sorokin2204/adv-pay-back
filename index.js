@@ -4,6 +4,7 @@ const app = express();
 const db = require('./src/models');
 const bodyParser = require('body-parser');
 const userRouter = require('./src/routes/user.routes');
+const typeGameRouter = require('./src/routes/typeGame.routes');
 const packageRouter = require('./src/routes/package.routes');
 const paymentRouter = require('./src/routes/payment.routes');
 const transactionRouter = require('./src/routes/transaction.routes');
@@ -12,9 +13,11 @@ const cheerio = require('cheerio');
 const { handleError } = require('./src/middleware/customError');
 const { CustomError, TypeError } = require('./src/models/customError.model');
 const { default: axios } = require('axios');
+const cron = require('node-cron');
 require('dotenv').config();
 const moment = require('moment');
 var generator = require('generate-password');
+const { genshinApi } = require('./src/utils/genshinApi');
 var corsOptions = {
   // origin: ['https://donate-gold.ru'],
   origin: '*',
@@ -26,9 +29,44 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-db.sequelize.sync({ alter: true }).then((se) => {});
+db.sequelize.sync({ alter: true }).then((se) => {
+  // db.typeGames.bulkCreate([
+  //   {
+  //     id: 1,
+  //     name: 'Identity',
+  //     slug: 'identity-v',
+  //   },
+  //   {
+  //     id: 2,
+  //     name: 'Genshin',
+  //     slug: 'genshin',
+  //   },
+  // ]);
+  // db.transactions.update({ typeGameId: 1 }, { where: { typeGameId: null } });
+  // db.packages.update({ typeGameId: 1 }, { where: { typeGameId: null } });
+});
+cron.schedule('*/30 * * * * *', async () => {
+  const processingTrans = await db.transactions.findAll({ where: { status: 'processing' }, raw: true });
+  for (let processingItem of processingTrans) {
+    try {
+      let dataOrder = await genshinApi({ type: 'order/order_detail', order_id: processingItem?.number });
+      dataOrder = JSON.parse(dataOrder);
+      if (dataOrder?.order_id === processingItem?.number && dataOrder?.order_status) {
+        await db.transactions.update(
+          { status: dataOrder?.order_status },
+          {
+            where: {
+              id: processingItem?.id,
+            },
+          },
+        );
+      }
+    } catch (errorrr) {}
+  }
+});
 
 app.use('/api/v1', userRouter);
+app.use('/api/v1', typeGameRouter);
 app.use('/api/v1', packageRouter);
 app.use('/api/v1', paymentRouter);
 app.use('/api/v1', creditCardRouter);

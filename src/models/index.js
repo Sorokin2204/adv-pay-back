@@ -50,6 +50,7 @@ db.referralCodes = require('./referralCode.model')(sequelize, Sequelize);
 db.packages = require('./package.model')(sequelize, Sequelize);
 db.transactions = require('./transaction.model')(sequelize, Sequelize);
 db.referralTransactions = require('./referralTransaction.model')(sequelize, Sequelize);
+db.typeGames = require('./typeGame.model')(sequelize, Sequelize);
 db.payments = require('./payment.model')(sequelize, Sequelize);
 db.creditCards = require('./creditCard.model')(sequelize, Sequelize);
 

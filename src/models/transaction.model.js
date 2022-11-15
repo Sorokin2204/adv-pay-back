@@ -31,6 +31,11 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: false,
     },
+    status: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      defaultValue: 'completed',
+    },
   });
   return Transaction;
 };

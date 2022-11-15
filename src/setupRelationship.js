@@ -16,6 +16,13 @@ const setupRelationship = (db) => {
 
   db.users.hasOne(db.referralCodes);
   db.referralCodes.belongsTo(db.users);
+
+  db.packages.belongsTo(db.typeGames);
+  db.typeGames.hasOne(db.packages);
+
+  db.transactions.belongsTo(db.typeGames);
+  db.typeGames.hasOne(db.transactions);
+
   db.users.hasMany(db.referralTransactions);
   db.referralTransactions.belongsTo(db.users);
 };
