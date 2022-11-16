@@ -29,24 +29,18 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-db.sequelize.sync({ alter: true }).then((se) => {
-  // db.typeGames.bulkCreate([
-  //   {
-  //     id: 1,
-  //     name: 'Identity',
-  //     slug: 'identity-v',
-  //   },
-  //   {
-  //     id: 2,
-  //     name: 'Genshin',
-  //     slug: 'genshin',
-  //   },
-  // ]);
-  // db.transactions.update({ typeGameId: 1 }, { where: { typeGameId: null } });
-  // db.packages.update({ typeGameId: 1 }, { where: { typeGameId: null } });
-});
-cron.schedule('*/30 * * * * *', async () => {
-  const processingTrans = await db.transactions.findAll({ where: { status: 'processing' }, raw: true });
+db.sequelize.sync({ alter: true }).then((se) => {});
+cron.schedule('0 0 */2 * * *', async () => {
+  const processingTrans = await db.transactions.findAll({
+    where: {
+      status: 'incorrect-details',
+      createdAt: {
+        $lt: new Date(),
+        $gt: moment().subtract(2, 'hours'),
+      },
+    },
+    raw: true,
+  });
   for (let processingItem of processingTrans) {
     try {
       let dataOrder = await genshinApi({ type: 'order/order_detail', order_id: processingItem?.number });
@@ -80,50 +74,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
-
-// const rateGet = async () => {
-//   const url = `https://exchanger.web.money/asp/wmlist.asp?exchtype=117`;
-//   const rate = await axios
-//     .get(url)
-//     .then((response) => {
-//       let $ = cheerio.load(response.data);
-//       const rateData = $('#exchtypebtn117 ~ span').text();
-//       return rateData;
-//       // res.json($('#exchtypebtn117 ~ span').text());
-//     })
-//     .catch(function (e) {
-//       console.log(e);
-//     });
-//   return rate;
-// };
-// console.log(await rateGet());
-
-// .then((response) => {
-
-//   res.json($('#exchtypebtn117 ~ span').text());
-// })
-// .catch(function (e) {
-//   console.log(e);
-// });
-
-// const rateGet = async () => {
-//   const url = `https://pay.primepayments.io/API/v1/`;
-//   const rate = await axios
-//     .post(url, {
-//       action: 'initPayment',
-//       project: 1251,
-//       sum: '100',
-//       currency: 'RUB',
-//       innerID: '1234',
-//       email: 'test@test.com',
-//       sign: 'd3d3d07d69bfa25324c9a244a1a7185b',
-//     })
-//     .then((response) => {
-//       console.log(response.data);
-//     })
-//     .catch(function (e) {
-//       console.log(e);
-//     });
-//   return rate;
-// };
-// console.log(rateGet());

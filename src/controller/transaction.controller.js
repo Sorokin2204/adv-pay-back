@@ -9,6 +9,8 @@ const User = db.users;
 const Package = db.packages;
 const TypeGame = db.typeGames;
 const CreditCard = db.creditCards;
+const TelegramBot = require('node-telegram-bot-api');
+const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
 class TransactionController {
   async createTranscation(req, res) {
@@ -41,6 +43,8 @@ class TransactionController {
     if (typeGameId === 1) {
       const findCard = await CreditCard.findOne({ where: { packageId: findPackage?.id, status: 'work' } });
       if (!findCard) {
+        const messageTelegram = `Пакеты закончились. Код пакета в базе code - ${packageId}`;
+        bot.sendMessage(process.env.TELEGRAM_CHAT, messageTelegram);
         throw new CustomError(404, TypeError.PACKAGE_NOT_ACTIVE);
       }
       const checkRes = await axios
@@ -180,7 +184,7 @@ class TransactionController {
           packageName: findPackage?.name,
           nickid: playerId,
           packageId: findPackage?.id,
-          creditCardId: 284,
+          creditCardId: 403,
           userId: findUserRepeat?.id,
           serverid: serverId == 'America' ? 1 : serverId == 'Europe' ? 2 : serverId == 'Asia' ? 3 : serverId == 'TW, HK, MO' ? 4 : 0,
           typeGameId,
