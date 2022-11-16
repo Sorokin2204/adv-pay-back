@@ -33,11 +33,16 @@ db.sequelize.sync({ alter: true }).then((se) => {});
 cron.schedule('0 0 */2 * * *', async () => {
   const processingTrans = await db.transactions.findAll({
     where: {
-      status: 'incorrect-details',
-      createdAt: {
-        $lt: new Date(),
-        $gt: moment().subtract(2, 'hours'),
-      },
+      typeGameId: 2,
+      $or: [
+        { status: 'incorrect-details' },
+        {
+          createdAt: {
+            $lt: new Date(),
+            $gt: moment().subtract(2, 'hours'),
+          },
+        },
+      ],
     },
     raw: true,
   });
