@@ -112,7 +112,7 @@ class UserController {
     const sign = md5(process.env.SECRET_PAYMENT + postData.action + postData.project + postData.sum + postData.currency + postData.innerID + postData.email + postData.payWay);
     postData.sign = sign;
 
-    const response = await axios.post('https://pay.primepayments.io/API/v1/', new URLSearchParams(postData), {
+    const response = await axios.post('https://pay.primepayments.io/API/v2/', new URLSearchParams(postData), {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
