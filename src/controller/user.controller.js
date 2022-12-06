@@ -143,8 +143,10 @@ class UserController {
           });
           if (findUser) {
             const newBalance = parseFloat(findUser?.balance) + parseFloat(sum);
+            const bonusBalanceCalc = parseFloat((0.5 / 100) * parseFloat(sum)).toFixed(2);
+            const newBonusBalance = parseFloat(findUser?.bonusBalance) + parseFloat(bonusBalanceCalc);
             await User.update(
-              { balance: newBalance.toFixed(2) },
+              { balance: newBalance.toFixed(2), bonusBalance: newBonusBalance.toFixed(2) },
               {
                 where: {
                   id: innerID,
@@ -370,7 +372,65 @@ class UserController {
     }
     res.json({ ...findUser, selfReferralCode: findSelfReferralCode, totalRefferal, totalRefferalToday });
   }
+  async getBonus(req, res) {
+    const tokenHeader = req.headers['request_token'];
+    const tokenData = jwt.verify(tokenHeader, process.env.SECRET_TOKEN, (err, tokenData) => {
+      if (err) {
+        throw new CustomError(403, TypeError.PROBLEM_WITH_TOKEN);
+      }
+      return tokenData;
+    });
 
+    const findUser = await User.findOne({ where: { id: tokenData?.id, active: true }, attributes: { exclude: ['password', 'createdAt'] } });
+
+    if (findUser?.bonusBalance && findUser?.bonusBalance >= 100) {
+      if (findUser?.bonusBalance >= 1000) {
+        const resultMinusBonus = (parseFloat(findUser?.bonusBalance) - parseFloat(1000)).toFixed(2);
+        const newBalance = parseFloat(findUser?.balance) + parseFloat(1000);
+        await User.update(
+          { balance: newBalance.toFixed(2), bonusBalance: resultMinusBonus },
+          {
+            where: {
+              id: tokenData?.id,
+              email: findUser?.email,
+              active: true,
+            },
+          },
+        );
+      } else if (findUser?.bonusBalance >= 500) {
+        const resultMinusBonus = (parseFloat(findUser?.bonusBalance) - parseFloat(500)).toFixed(2);
+        const newBalance = parseFloat(findUser?.balance) + parseFloat(500);
+        await User.update(
+          { balance: newBalance.toFixed(2), bonusBalance: resultMinusBonus },
+          {
+            where: {
+              id: tokenData?.id,
+              email: findUser?.email,
+              active: true,
+            },
+          },
+        );
+      } else if (findUser?.bonusBalance >= 100) {
+        const resultMinusBonus = (parseFloat(findUser?.bonusBalance) - parseFloat(100)).toFixed(2);
+        const newBalance = parseFloat(findUser?.balance) + parseFloat(100);
+        await User.update(
+          { balance: newBalance.toFixed(2), bonusBalance: resultMinusBonus },
+          {
+            where: {
+              id: tokenData?.id,
+              email: findUser?.email,
+              active: true,
+            },
+          },
+        );
+      }
+      res.json(true);
+    } else {
+      throw new CustomError(400);
+    }
+
+    res.json({});
+  }
   async checkAccount(req, res) {
     const { id, server } = req.params;
     const { typeGameId } = req.query;

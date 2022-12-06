@@ -18,3 +18,4 @@ router.post('/user/init-payment', errorWrapper(userController.initPaymentCard));
 router.post('/user/process-payment', errorWrapper(userController.processPaymentCreditCard));
 router.post('/user/generate-promo-code', errorWrapper(auth), errorWrapper(userController.generateReferralCode));
 module.exports = router;
+router.get('/user/bonus', errorWrapper(auth), errorWrapper(userController.getBonus));

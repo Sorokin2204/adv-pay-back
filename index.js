@@ -37,10 +37,7 @@ cron.schedule('0 0 */2 * * *', async () => {
       $or: [
         { status: 'incorrect-details' },
         {
-          createdAt: {
-            $lt: new Date(),
-            $gt: moment().subtract(2, 'hours'),
-          },
+          status: 'processing',
         },
       ],
     },

@@ -105,6 +105,7 @@ class TransactionController {
         if (!findUserRepeat) {
           throw new CustomError(400);
         }
+
         const updateBalance = parseFloat(findUserRepeat?.balance).toFixed(2) - parseFloat(findPackage?.price).toFixed(2);
         await User.update({ balance: updateBalance }, { where: { id: tokenData?.id } });
         const createTransactionRow = {

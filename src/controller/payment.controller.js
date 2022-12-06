@@ -79,9 +79,10 @@ class PackageController {
             throw new CustomError(400);
           }
           const updateBalance = parseFloat(findUser?.balance) + parseFloat(rubCurrent);
-
+          const bonusBalanceCalc = parseFloat((0.5 / 100) * parseFloat(rubCurrent)).toFixed(2);
+          const newBonusBalance = parseFloat(findUser?.bonusBalance) + parseFloat(bonusBalanceCalc);
           await User.update(
-            { balance: updateBalance.toFixed(2) },
+            { balance: updateBalance.toFixed(2), bonusBalance: newBonusBalance },
             {
               where: {
                 id: findUser?.id,

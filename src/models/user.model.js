@@ -39,6 +39,10 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: true,
         defaultValue: null,
       },
+      bonusBalance: {
+        type: Sequelize.FLOAT,
+        defaultValue: 0,
+      },
     },
     {
       updatedAt: false,
