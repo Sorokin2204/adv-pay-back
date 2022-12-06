@@ -212,6 +212,7 @@ class TransactionController {
       include: {
         model: TypeGame,
       },
+      order: [['createdAt', 'DESC']],
     });
     res.json(allTrans);
   }

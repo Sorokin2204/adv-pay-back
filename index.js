@@ -29,7 +29,7 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-db.sequelize.sync({ alter: true }).then((se) => {});
+db.sequelize.sync({ alter: true }).then(async (se) => {});
 cron.schedule('0 0 */2 * * *', async () => {
   const processingTrans = await db.transactions.findAll({
     where: {

@@ -17,6 +17,7 @@ const ReferralCode = db.referralCodes;
 const Payment = db.payments;
 const ReferralTransactions = db.referralTransactions;
 const { OAuth2Client } = require('google-auth-library');
+const { avatarsGenshin } = require('../utils/dataAvatarGenshin');
 const client = new OAuth2Client(process.env.GOOGLE_AUTH_KEY);
 const userBodyProps = ['firstName', 'lastName', 'photo', 'dateOfBirth', 'about'];
 
@@ -372,20 +373,53 @@ class UserController {
 
   async checkAccount(req, res) {
     const { id, server } = req.params;
-    await axios
-      .get(`https://idvpay.com/api/v1/user_info?serverId=${server}&roleId=${id}`)
-      .then((result) => {
-        const roleId = result.data.data.roleid;
-        const roleName = result.data.data.rolename;
-        const obj = {
-          id: roleId,
-          nickname: roleName,
-        };
-        res.json(obj);
-      })
-      .catch((err) => {
-        throw new CustomError(404);
-      });
+    const { typeGameId } = req.query;
+    console.log('Type game', typeGameId);
+    if (typeGameId == '1') {
+      await axios
+        .get(`https://idvpay.com/api/v1/user_info?serverId=${server}&roleId=${id}`)
+        .then((result) => {
+          const roleId = result.data.data.roleid;
+          const roleName = result.data.data.rolename;
+          const obj = {
+            id: roleId,
+            nickname: roleName,
+          };
+          res.json(obj);
+        })
+        .catch((err) => {
+          throw new CustomError(404);
+        });
+    } else if (typeGameId == '2') {
+      await axios
+        .get(`https://enka.network/u/${id}/__data.json`)
+        .then((result) => {
+          if (Object.keys(result.data).length === 0) {
+            throw new CustomError(404);
+          } else {
+            console.log(result.data);
+          }
+          const roleId = result.data.playerInfo.nickname;
+          const roleName = result.data.playerInfo.nickname;
+          const level = result.data.playerInfo.level;
+          const wordlLevel = result.data.playerInfo.worldLevel;
+          const avatar = result.data.playerInfo.profilePicture.avatarId;
+          const image = avatarsGenshin[avatar] ? `https://enka.network/ui/${avatarsGenshin[avatar]}.png` : '';
+          const obj = {
+            id: id,
+            nickname: roleName,
+            wordlLevel,
+            level,
+            image,
+          };
+          res.json(obj);
+        })
+        .catch((err) => {
+          throw new CustomError(404);
+        });
+    } else {
+      throw new CustomError(404);
+    }
   }
 
   async payment(req, res) {
