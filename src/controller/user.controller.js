@@ -16,6 +16,7 @@ const User = db.users;
 const ReferralCode = db.referralCodes;
 const Payment = db.payments;
 const ReferralTransactions = db.referralTransactions;
+const Settings = db.settings;
 const { OAuth2Client } = require('google-auth-library');
 const { avatarsGenshin } = require('../utils/dataAvatarGenshin');
 const client = new OAuth2Client(process.env.GOOGLE_AUTH_KEY);
@@ -124,7 +125,10 @@ class UserController {
     }
     res.json(response.data);
   }
-
+  async getSettings(req, res) {
+    const settings = await Settings.findAll();
+    res.json(settings);
+  }
   async processPaymentCreditCard(req, res) {
     const { action, orderID, payWay, innerID, sum, webmaster_profit, sign, email } = req.body;
     const clientIp = requestIp.getClientIp(req);

@@ -19,3 +19,4 @@ router.post('/user/process-payment', errorWrapper(userController.processPaymentC
 router.post('/user/generate-promo-code', errorWrapper(auth), errorWrapper(userController.generateReferralCode));
 module.exports = router;
 router.get('/user/bonus', errorWrapper(auth), errorWrapper(userController.getBonus));
+router.get('/settings', errorWrapper(userController.getSettings));

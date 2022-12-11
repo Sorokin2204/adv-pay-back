@@ -53,6 +53,7 @@ db.referralTransactions = require('./referralTransaction.model')(sequelize, Sequ
 db.typeGames = require('./typeGame.model')(sequelize, Sequelize);
 db.payments = require('./payment.model')(sequelize, Sequelize);
 db.creditCards = require('./creditCard.model')(sequelize, Sequelize);
+db.settings = require('./settings.model')(sequelize, Sequelize);
 
 setupRelationship(db);
 
