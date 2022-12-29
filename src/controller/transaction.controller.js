@@ -11,6 +11,7 @@ const TypeGame = db.typeGames;
 const CreditCard = db.creditCards;
 const TelegramBot = require('node-telegram-bot-api');
 const { getIdenOrderId } = require('../utils/getIdenOrderId');
+const { v4: uuidv4 } = require('uuid');
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
 class TransactionController {
@@ -58,6 +59,38 @@ class TransactionController {
         .catch((result) => {
           throw new CustomError(404, TypeError.ACCOUNT_NOT_FOUND);
         });
+      const findCard = await CreditCard.findOne({ where: { packageId: findPackage?.id, status: 'work' } });
+      if (!findCard) {
+        const messageTelegram = `Пакеты закончились. Код пакета в базе code - ${packageId}`;
+        bot.sendMessage(process.env.TELEGRAM_CHAT, messageTelegram);
+
+        throw new CustomError(404, TypeError.PACKAGE_NOT_ACTIVE);
+      }
+      const findUserRepeat = await User.findOne({ where: { id: tokenData?.id }, attributes: { exclude: ['password', 'createdAt'] } });
+      if (!findUserRepeat) {
+        throw new CustomError(400);
+      }
+      if (findUserRepeat?.balance < findPackage?.price) {
+        throw new CustomError(404, TypeError.BALANCE_ERROR);
+      }
+      const updateBalance = parseFloat(findUserRepeat?.balance).toFixed(2) - parseFloat(findPackage?.price).toFixed(2);
+      await User.update({ balance: updateBalance }, { where: { id: tokenData?.id } });
+      const createTransactionRow = {
+        date: new Date(),
+        number: uuidv4(),
+        nickname: checkRes.roleNameCheck,
+        price: findPackage?.price,
+        packageName: findPackage?.name,
+        nickid: checkRes.roleCheck,
+        packageId: findPackage?.id,
+        creditCardId: findCard?.id,
+        userId: findUserRepeat?.id,
+        serverid: serverId,
+        typeGameId,
+        status: 'in-progress',
+      };
+      const newTrans = await Transaction.create(createTransactionRow);
+
       let generatePaymentRes;
       if (typeGameId === 1) {
         generatePaymentRes = await getIdenOrderId(playerId, serverId, packageId);
@@ -81,14 +114,10 @@ class TransactionController {
       }
 
       if (!generatePaymentRes) {
+        await Transaction.update({ status: 'in-error' }, { where: { id: newTrans?.id } });
         throw new CustomError(400);
       }
-      const findCard = await CreditCard.findOne({ where: { packageId: findPackage?.id, status: 'work' } });
-      if (!findCard) {
-        const messageTelegram = `Пакеты закончились. Код пакета в базе code - ${packageId}`;
-        bot.sendMessage(process.env.TELEGRAM_CHAT, messageTelegram);
-        throw new CustomError(404, TypeError.PACKAGE_NOT_ACTIVE);
-      }
+
       const createPaymentRes = await axios
         .post(`https://gamecode.topupease.com/client/gamecode/active`, {
           card_pwd: findCard?.code,
@@ -98,7 +127,8 @@ class TransactionController {
         .then((res) => {
           return res.data;
         })
-        .catch(() => {
+        .catch(async () => {
+          await Transaction.update({ status: 'in-error' }, { where: { id: newTrans?.id } });
           throw new CustomError(400);
         });
       if (createPaymentRes?.code === 1000) {
@@ -110,28 +140,7 @@ class TransactionController {
             },
           },
         );
-        const findUserRepeat = await User.findOne({ where: { id: tokenData?.id }, attributes: { exclude: ['password', 'createdAt'] } });
-        if (!findUserRepeat) {
-          throw new CustomError(400);
-        }
-
-        const updateBalance = parseFloat(findUserRepeat?.balance).toFixed(2) - parseFloat(findPackage?.price).toFixed(2);
-        await User.update({ balance: updateBalance }, { where: { id: tokenData?.id } });
-        const createTransactionRow = {
-          date: new Date(),
-          number: generatePaymentRes,
-          nickname: checkRes.roleNameCheck,
-          price: findPackage?.price,
-          packageName: findPackage?.name,
-          nickid: checkRes.roleCheck,
-          packageId: findPackage?.id,
-          creditCardId: findCard?.id,
-          userId: findUserRepeat?.id,
-          serverid: serverId,
-          typeGameId,
-          status: 'completed',
-        };
-        await Transaction.create(createTransactionRow);
+        await Transaction.update({ status: 'completed', number: generatePaymentRes }, { where: { id: newTrans?.id } });
         res.json(true);
       } else if (createPaymentRes?.code === 4301) {
         await CreditCard.update(
@@ -142,8 +151,10 @@ class TransactionController {
             },
           },
         );
+        await Transaction.update({ status: 'in-error-card' }, { where: { id: newTrans?.id } });
         throw new CustomError(400);
       } else if (createPaymentRes?.code === 4305) {
+        await Transaction.update({ status: 'in-error-card' }, { where: { id: newTrans?.id } });
         await CreditCard.update(
           { status: 'has-been-used' },
           {
@@ -152,8 +163,10 @@ class TransactionController {
             },
           },
         );
+
         throw new CustomError(400);
       } else if (createPaymentRes?.code === 4309) {
+        await Transaction.update({ status: 'in-error-card' }, { where: { id: newTrans?.id } });
         await CreditCard.update(
           { status: 'amount-less' },
           {
@@ -164,6 +177,7 @@ class TransactionController {
         );
         throw new CustomError(400);
       } else if (createPaymentRes?.code === 4308) {
+        await Transaction.update({ status: 'in-error-card' }, { where: { id: newTrans?.id } });
         await CreditCard.update(
           { status: 'amount-greater' },
           {
@@ -174,6 +188,7 @@ class TransactionController {
         );
         throw new CustomError(400);
       } else {
+        await Transaction.update({ status: 'in-error-card' }, { where: { id: newTrans?.id } });
         throw new CustomError(400);
       }
     } else if (typeGameId === 2) {
