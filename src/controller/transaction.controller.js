@@ -10,6 +10,7 @@ const Package = db.packages;
 const TypeGame = db.typeGames;
 const CreditCard = db.creditCards;
 const TelegramBot = require('node-telegram-bot-api');
+const { getIdenOrderId } = require('../utils/getIdenOrderId');
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
 class TransactionController {
@@ -41,12 +42,6 @@ class TransactionController {
       throw new CustomError(404, TypeError.BALANCE_ERROR);
     }
     if (typeGameId === 1) {
-      const findCard = await CreditCard.findOne({ where: { packageId: findPackage?.id, status: 'work' } });
-      if (!findCard) {
-        const messageTelegram = `Пакеты закончились. Код пакета в базе code - ${packageId}`;
-        bot.sendMessage(process.env.TELEGRAM_CHAT, messageTelegram);
-        throw new CustomError(404, TypeError.PACKAGE_NOT_ACTIVE);
-      }
       const checkRes = await axios
         .get(`https://idvpay.com/api/v1/user_info?serverId=${serverId}&roleId=${playerId}`)
         .then((result) => {
@@ -63,23 +58,37 @@ class TransactionController {
         .catch((result) => {
           throw new CustomError(404, TypeError.ACCOUNT_NOT_FOUND);
         });
-      const generatePaymentRes = await axios
-        .get(`https://idvpay.com/api/v1/get_pay_url?payMethod=gamecode&payType=netease+gamecode_netease+gamecode&serverId=${checkRes.hostCheck}&roleId=${checkRes.roleCheck}&accountId=${checkRes.accountCheck}&goodsId=h55na.mol.others.${findPackage?.code}echoes&region=&platform=pc`)
-        .then((result) => {
-          console.log('ПОЛУЧЕНИЕ ПЛАТЕЖА');
-          if (result.data.errorcode !== 0 && result.data.success === false) {
+      let generatePaymentRes;
+      if (typeGameId === 1) {
+        generatePaymentRes = await getIdenOrderId(playerId, serverId, packageId);
+      } else {
+        generatePaymentRes = await axios
+          .get(`https://idvpay.com/api/v1/get_pay_url?payMethod=gamecode&payType=netease+gamecode_netease+gamecode&serverId=${checkRes.hostCheck}&roleId=${checkRes.roleCheck}&accountId=${checkRes.accountCheck}&goodsId=h55na.mol.others.${findPackage?.code}echoes&region=&platform=pc`)
+          .then((result) => {
+            console.log('ПОЛУЧЕНИЕ ПЛАТЕЖА');
+            if (result.data.errorcode !== 0 && result.data.success === false) {
+              throw new CustomError(400);
+            }
+            const urlPayment = new URL(result.data.data);
+            const paramsPayment = urlPayment.searchParams;
+            const idPayment = paramsPayment.get('pay_orderid');
+
+            return idPayment;
+          })
+          .catch((err) => {
             throw new CustomError(400);
-          }
-          const urlPayment = new URL(result.data.data);
-          const paramsPayment = urlPayment.searchParams;
-          const idPayment = paramsPayment.get('pay_orderid');
+          });
+      }
 
-          return idPayment;
-        })
-        .catch((err) => {
-          throw new CustomError(400);
-        });
-
+      if (!generatePaymentRes) {
+        throw new CustomError(400);
+      }
+      const findCard = await CreditCard.findOne({ where: { packageId: findPackage?.id, status: 'work' } });
+      if (!findCard) {
+        const messageTelegram = `Пакеты закончились. Код пакета в базе code - ${packageId}`;
+        bot.sendMessage(process.env.TELEGRAM_CHAT, messageTelegram);
+        throw new CustomError(404, TypeError.PACKAGE_NOT_ACTIVE);
+      }
       const createPaymentRes = await axios
         .post(`https://gamecode.topupease.com/client/gamecode/active`, {
           card_pwd: findCard?.code,
