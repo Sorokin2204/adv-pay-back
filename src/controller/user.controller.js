@@ -126,7 +126,9 @@ class UserController {
     res.json(response.data);
   }
   async getSettings(req, res) {
-    const settings = await Settings.findAll();
+    const settings = await Settings.findAll({
+      order: [['id', 'ASC']],
+    });
     res.json(settings);
   }
   async processPaymentCreditCard(req, res) {
@@ -479,6 +481,23 @@ class UserController {
           res.json(obj);
         })
         .catch((err) => {
+          throw new CustomError(404);
+        });
+    } else if (typeGameId == '3') {
+      await axios
+        .get(`https://www.oaglobalpay.com/api/v1/user_info?roleId=${id}&serverId=${server}`)
+        .then((result) => {
+          const roleName = result.data.data.rolename;
+          const loginChanel = result.data.data.login_channel;
+          const obj = {
+            id,
+            nickname: roleName,
+            device: loginChanel,
+          };
+          res.json(obj);
+        })
+        .catch((err) => {
+          console.log(err.response.data);
           throw new CustomError(404);
         });
     } else {

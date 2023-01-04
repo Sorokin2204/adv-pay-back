@@ -12,6 +12,7 @@ const CreditCard = db.creditCards;
 const TelegramBot = require('node-telegram-bot-api');
 const { getIdenOrderId } = require('../utils/getIdenOrderId');
 const { v4: uuidv4 } = require('uuid');
+const Sequelize = require('sequelize');
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
 class TransactionController {
@@ -22,7 +23,7 @@ class TransactionController {
     if (!packageId || !playerId || !serverId) {
       throw new CustomError(500);
     }
-    const findPackage = await Package.findOne({ where: { code: packageId } });
+    const findPackage = await Package.findOne({ where: { code: packageId, typeGameId } });
     if (!findPackage) {
       throw new CustomError(500);
     }
@@ -42,11 +43,16 @@ class TransactionController {
     if (findUser?.balance < findPackage?.price) {
       throw new CustomError(404, TypeError.BALANCE_ERROR);
     }
-    if (typeGameId === 1) {
+    if (typeGameId === 1 || typeGameId === 3) {
+      let checkResUrl;
+      if (typeGameId === 1) {
+        checkResUrl = `https://idvpay.com/api/v1/user_info?serverId=${serverId}&roleId=${playerId}`;
+      } else if (typeGameId === 3) {
+        checkResUrl = `https://www.oaglobalpay.com/api/v1/user_info?roleId=${playerId}&serverId=${serverId}`;
+      }
       const checkRes = await axios
-        .get(`https://idvpay.com/api/v1/user_info?serverId=${serverId}&roleId=${playerId}`)
+        .get(checkResUrl)
         .then((result) => {
-          console.log('ПРОВЕРКА АКК');
           if (result.data.errorcode !== 0 && !result.data) {
             throw new CustomError(404, TypeError.ACCOUNT_NOT_FOUND);
           }
@@ -59,10 +65,11 @@ class TransactionController {
         .catch((result) => {
           throw new CustomError(404, TypeError.ACCOUNT_NOT_FOUND);
         });
-      const findCard = await CreditCard.findOne({ where: { packageId: findPackage?.id, status: 'work' } });
+
+      const findCard = await CreditCard.findOne({ order: Sequelize.literal('rand()'), where: { packageId: findPackage?.id, status: 'work' } });
       if (!findCard) {
         const messageTelegram = `Пакеты закончились. Код пакета в базе code - ${packageId}`;
-        bot.sendMessage(process.env.TELEGRAM_CHAT, messageTelegram);
+        // bot.sendMessage(process.env.TELEGRAM_CHAT, messageTelegram);
 
         throw new CustomError(404, TypeError.PACKAGE_NOT_ACTIVE);
       }
@@ -94,9 +101,9 @@ class TransactionController {
       let generatePaymentRes;
       if (typeGameId === 1) {
         generatePaymentRes = await getIdenOrderId(playerId, serverId, packageId);
-      } else {
+      } else if (typeGameId === 3) {
         generatePaymentRes = await axios
-          .get(`https://idvpay.com/api/v1/get_pay_url?payMethod=gamecode&payType=netease+gamecode_netease+gamecode&serverId=${checkRes.hostCheck}&roleId=${checkRes.roleCheck}&accountId=${checkRes.accountCheck}&goodsId=h55na.mol.others.${findPackage?.code}echoes&region=&platform=pc`)
+          .get(`https://www.oaglobalpay.com/api/v1/get_pay_url?roleId=${checkRes.roleCheck}&serverId=${checkRes.hostCheck}&payMethod=gamecode&payType=netease+gamecode_netease+gamecode&accountId=${checkRes.accountCheck}&region=Others&platform=ad&goodsId=com.netease.gbmol.${findPackage?.code}gouyu`)
           .then((result) => {
             console.log('ПОЛУЧЕНИЕ ПЛАТЕЖА');
             if (result.data.errorcode !== 0 && result.data.success === false) {
