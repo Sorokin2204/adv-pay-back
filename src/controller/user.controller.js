@@ -7,7 +7,11 @@ const moment = require('moment');
 const Sequelize = require('sequelize');
 const requestIp = require('request-ip');
 const cheerio = require('cheerio');
+const path = require('path');
+const fs = require('fs');
+var mime = require('mime-types');
 var md5 = require('md5');
+const { v4: uuidv4 } = require('uuid');
 const { CustomError, TypeError } = require('../models/customError.model');
 var generator = require('generate-password');
 const validBodyKeys = require('../utils/validBodyKeys');
@@ -500,11 +504,66 @@ class UserController {
           console.log(err.response.data);
           throw new CustomError(404);
         });
+    } else if (typeGameId == '4') {
+      await axios
+        .get(`https://payment.lotr-risetowar.com/api/v1/user_info?serverId=${server}&roleId=${id}`)
+        .then((result) => {
+          const roleId = result.data.data.roleid;
+          const roleName = result.data.data.rolename;
+          const obj = {
+            id: roleId,
+            nickname: roleName,
+          };
+          res.json(obj);
+        })
+        .catch((err) => {
+          console.log(err.response.data);
+          throw new CustomError(404);
+        });
     } else {
       throw new CustomError(404);
     }
   }
+  async uploadAvatar(req, res) {
+    const authHeader = req.headers['request_token'];
+    const decoded = jwt.verify(authHeader, process.env.SECRET_TOKEN);
 
+    if (!req.file) {
+      throw new CustomError(400);
+    }
+    let imageGenName;
+    const findUser = await User.findOne({ where: { id: decoded?.id, active: true } });
+    if (!findUser) {
+      throw new CustomError(400);
+    }
+    if (req.file) {
+      const imagePath = path.join(path.resolve('./'), '/public/images');
+      const imageExtension = mime.extension(req.file.mimetype);
+      imageGenName = `${uuidv4()}.${imageExtension}`;
+      const imageFullPath = path.resolve(`${imagePath}/${imageGenName}`);
+      fs.writeFile(imageFullPath, req.file.buffer, function (err) {
+        if (err) throw new CustomError();
+      });
+    }
+    if (req.file && findUser?.avatar) {
+      const imagePath = path.join(path.resolve('./'), '/public/images');
+      const imageFullPath = path.resolve(`${imagePath}/${findUser?.avatar}`);
+      fs.exists(imageFullPath, function (exists) {
+        if (exists) {
+          fs.unlinkSync(imageFullPath);
+        }
+      });
+    }
+    await User.update(
+      { avatar: imageGenName },
+      {
+        where: {
+          id: findUser?.id,
+        },
+      },
+    );
+    res.json(imageGenName);
+  }
   async payment(req, res) {
     // const { package, id } = req.body;
 

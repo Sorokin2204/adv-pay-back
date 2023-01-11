@@ -43,12 +43,14 @@ class TransactionController {
     if (findUser?.balance < findPackage?.price) {
       throw new CustomError(404, TypeError.BALANCE_ERROR);
     }
-    if (typeGameId === 1 || typeGameId === 3) {
+    if (typeGameId === 1 || typeGameId === 3 || typeGameId === 4) {
       let checkResUrl;
       if (typeGameId === 1) {
         checkResUrl = `https://idvpay.com/api/v1/user_info?serverId=${serverId}&roleId=${playerId}`;
       } else if (typeGameId === 3) {
         checkResUrl = `https://www.oaglobalpay.com/api/v1/user_info?roleId=${playerId}&serverId=${serverId}`;
+      } else if (typeGameId === 4) {
+        checkResUrl = `https://payment.lotr-risetowar.com/api/v1/user_info?serverId=${serverId}&roleId=${playerId}`;
       }
       const checkRes = await axios
         .get(checkResUrl)
@@ -60,7 +62,8 @@ class TransactionController {
           const roleCheck = result.data.data.roleid;
           const hostCheck = result.data.data.hostid;
           const roleNameCheck = result.data.data.rolename;
-          return { accountCheck, roleCheck, hostCheck, roleNameCheck };
+          const aidCheck = result.data.data?.aid;
+          return { accountCheck, roleCheck, hostCheck, roleNameCheck, aidCheck };
         })
         .catch((result) => {
           throw new CustomError(404, TypeError.ACCOUNT_NOT_FOUND);
@@ -88,11 +91,11 @@ class TransactionController {
         nickname: checkRes.roleNameCheck,
         price: findPackage?.price,
         packageName: findPackage?.name,
-        nickid: checkRes.roleCheck,
+        nickid: typeGameId === 1 ? checkRes.roleCheck : checkRes.accountCheck,
         packageId: findPackage?.id,
         creditCardId: findCard?.id,
         userId: findUserRepeat?.id,
-        serverid: serverId,
+        serverid: serverId.toString().replace(/\D/g, ''),
         typeGameId,
         status: 'in-progress',
       };
@@ -101,9 +104,15 @@ class TransactionController {
       let generatePaymentRes;
       if (typeGameId === 1) {
         generatePaymentRes = await getIdenOrderId(playerId, serverId, packageId);
-      } else if (typeGameId === 3) {
+      } else if (typeGameId === 3 || typeGameId === 4) {
+        let paymentUrl;
+        if (typeGameId === 3) {
+          paymentUrl = `https://www.oaglobalpay.com/api/v1/get_pay_url?roleId=${checkRes.roleCheck}&serverId=${checkRes.hostCheck}&payMethod=gamecode&payType=netease+gamecode_netease+gamecode&accountId=${checkRes.accountCheck}&region=Others&platform=ad&goodsId=com.netease.gbmol.${findPackage?.code}gouyu`;
+        } else if (typeGameId === 4) {
+          paymentUrl = `https://payment.lotr-risetowar.com/api/v1/get_pay_url?aid=${checkRes.aidCheck}&roleId=${checkRes.roleCheck}&serverId=${checkRes.hostCheck}&payMethod=gamecode&payType=netease+gamecode_netease+gamecode&accountId=${checkRes.accountCheck}&region=Others&platform=ad&appChannel=&goodsId=g96naxx2gb.USD.yuanbao${findPackage?.code}.ally`;
+        }
         generatePaymentRes = await axios
-          .get(`https://www.oaglobalpay.com/api/v1/get_pay_url?roleId=${checkRes.roleCheck}&serverId=${checkRes.hostCheck}&payMethod=gamecode&payType=netease+gamecode_netease+gamecode&accountId=${checkRes.accountCheck}&region=Others&platform=ad&goodsId=com.netease.gbmol.${findPackage?.code}gouyu`)
+          .get(paymentUrl)
           .then((result) => {
             console.log('ПОЛУЧЕНИЕ ПЛАТЕЖА');
             if (result.data.errorcode !== 0 && result.data.success === false) {

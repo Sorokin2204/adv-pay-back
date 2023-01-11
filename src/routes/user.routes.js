@@ -3,6 +3,7 @@ const userController = require('../controller/user.controller');
 const router = new Router();
 const auth = require('../middleware/auth');
 const { errorWrapper } = require('../middleware/customError');
+const upload = require('../middleware/multer');
 const validate = require('../middleware/validate');
 
 router.post('/user/add', errorWrapper(userController.createUser));
@@ -16,6 +17,7 @@ router.post('/user/reset-password', errorWrapper(userController.resetPassword));
 router.post('/user/google-auth', errorWrapper(userController.googleAuth));
 router.post('/user/init-payment', errorWrapper(userController.initPaymentCard));
 router.post('/user/process-payment', errorWrapper(userController.processPaymentCreditCard));
+router.post('/user/upload-avatar', upload.single('image'), errorWrapper(userController.uploadAvatar));
 router.post('/user/generate-promo-code', errorWrapper(auth), errorWrapper(userController.generateReferralCode));
 module.exports = router;
 router.get('/user/bonus', errorWrapper(auth), errorWrapper(userController.getBonus));
